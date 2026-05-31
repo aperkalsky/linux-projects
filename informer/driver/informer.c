@@ -1,9 +1,29 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <asm/msr.h>	// to read CPU regs
+#include <linux/types.h>
+
+#include "informer.h"
+
+void test_temp_read(void)
+{
+	u64 therm;
+	int delta, temperature;
+
+	rdmsrl(0x19C, therm);
+	pr_info("THERM MSR = 0x%llx\n", therm);
+	
+	delta = (therm >> 16) & 0x7F;	
+	pr_info("Delta = %d\n", delta);
+	
+	temperature = TJ_MAX - delta;
+	pr_info("CPU temperature = %d\n", temperature);
+}
 
 static int __init informer_init(void)
 {
     printk(KERN_INFO "informer kernel module initialized\n");
+	test_temp_read();
     return 0;
 }
 
