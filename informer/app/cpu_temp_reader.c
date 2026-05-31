@@ -12,19 +12,10 @@ void restore_terminal(void)
     tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
 }
 
-int main(void)
+// prepare terminal to non-canonical mode
+void prepare_terminal(void)
 {
     struct termios new_termios;
-    int fd;
-	int temp;
-
-
-    fd = open("/dev/informer", O_RDONLY);
-    if (fd < 0) {
-        perror("open");
-        return 1;
-    }
-
 
     /* Save current settings */
     tcgetattr(STDIN_FILENO, &orig_termios);
@@ -42,8 +33,23 @@ int main(void)
     new_termios.c_cc[VTIME] = 0;
 
     tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
+}
 
-    printf("Press 'q' to quit\n");
+int main(void)
+{
+    int fd;
+	int temp;
+
+
+    fd = open("/dev/informer", O_RDONLY);
+    if (fd < 0) {
+        perror("open");
+        return 1;
+    }
+
+	prepare_terminal();
+
+    printf("Reading CPU temperature. Press 'q' to quit\n");
 
     while (1) {
 
@@ -74,9 +80,8 @@ int main(void)
             }
         }
 
-        /* Your periodic driver read goes here */
 		if (read(fd, &temp, sizeof(temp)) == sizeof(temp))
-			printf("Temp = %d\n", temp);
+			printf("CPU temperature = %d\n", temp);
     }
 
 	close(fd);
