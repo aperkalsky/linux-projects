@@ -11,11 +11,11 @@ void test_temp_read(void)
 	int delta, temperature;
 
 	// read MSR
-	rdmsrl(0x19C, therm);
+	rdmsrl(IA32_THERM_STATUS, therm);
 	pr_info("THERM MSR = 0x%llx\n", therm);
 	
 	// extract temperature delta
-	delta = (therm >> 16) & 0x7F;	
+	delta = (therm >> 16) & IA32_THERM_STATUS_MASK;	
 	pr_info("Delta = %d\n", delta);
 	
 	// calculate real CPU temperature
