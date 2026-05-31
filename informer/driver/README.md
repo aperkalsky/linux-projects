@@ -1,0 +1,1 @@
+Kernel mode driver (loadable module) that demonstrates read from CPU registers (reads CPU temperature)
