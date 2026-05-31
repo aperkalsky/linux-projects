@@ -19,6 +19,16 @@ static const struct file_operations informer_fops = {
     .read  = informer_read,
 };
 
+// devnode callback
+static char *informer_devnode(const struct device *dev,
+                              umode_t *mode)
+{
+    if (mode)
+        *mode = 0644;	// make it readable for all, the default is 0600
+
+    return NULL;
+}
+
 int read_cpu_temperature(void)
 {
 	u64 therm;
@@ -82,6 +92,9 @@ static int __init informer_init(void)
         ret = PTR_ERR(informer_class);
         goto err_cdev;
     }
+	
+	// register devnode callback
+	informer_class->devnode = informer_devnode;
 
     /* Create device node */
     if (IS_ERR(device_create(informer_class,
