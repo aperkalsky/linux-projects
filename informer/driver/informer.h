@@ -4,4 +4,9 @@
 #define TJ_MAX	100	// max junction temperature in Celsius
 
 // function prototypes
-void test_temp_read(void);
+int read_cpu_temperature(void);
+
+static ssize_t informer_read(struct file *file,
+                             char __user *buf,
+                             size_t count,
+                             loff_t *ppos);
