@@ -1,9 +1,5 @@
-This demo project shows how to use a kernel mode driver to access the HW registers.
+This demo app allows to choose the number of threads to launch. Each threads performs some heavy math.
 
-For safety the read access is used.
+You can see that after a certain threshold there's no gain to launch more threads.
 
-The driver reads CPU temperature from its MSR. It opens read() interface to be accessible
-from the user mode app. On load it creates a devnode. The app uses this devnode to open
-a driver.
-
-This project was tested on Lenovo laptop running Ubuntu Linux.
+This proves the thesis "Concurrency doesn't necessarily mean speedup"
