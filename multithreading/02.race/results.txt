@@ -1,0 +1,21 @@
+Without mutex:
+--------------
+
+Number of threads chosen: 100
+Elapsed time: 0.270045 seconds
+Counter value = 1448112
+
+With mutex:
+-----------
+
+Number of threads chosen: 100
+Elapsed time: 13.920973 seconds
+Counter value = 100000000
+
+Using atomic:
+-------------
+
+Number of threads chosen: 100
+Elapsed time: 1.728870 seconds
+Counter value = 100000000
+
