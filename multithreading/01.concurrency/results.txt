@@ -1,0 +1,11 @@
+Number of threads chosen: 1
+Elapsed time: 0.334430 seconds
+
+Number of threads chosen: 2
+Elapsed time: 0.335004 seconds
+
+Number of threads chosen: 10
+Elapsed time: 0.784941 seconds
+
+Number of threads chosen: 100
+Elapsed time: 7.443267 seconds
