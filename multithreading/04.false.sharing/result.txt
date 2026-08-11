@@ -1,0 +1,5 @@
+With padding:
+Elapsed time: 1.517825 seconds
+
+No padding:
+Elapsed time: 5.910069 seconds

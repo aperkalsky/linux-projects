@@ -1,0 +1,1 @@
+This demo app provides a benchmark for cache bouncing/false sharing
