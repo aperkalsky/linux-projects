@@ -1,0 +1,1 @@
+This demo app implements the producer-consumer design pattern

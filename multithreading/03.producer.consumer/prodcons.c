@@ -1,0 +1,161 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
+#define QUEUE_SIZE     5
+#define NUM_ITEMS      20
+
+typedef struct
+{
+    int buffer[QUEUE_SIZE];
+
+    int head;       // Next position to write
+    int tail;       // Next position to read
+    int count;      // Number of items currently in queue
+
+    pthread_mutex_t mutex;
+    pthread_cond_t  not_empty;
+    pthread_cond_t  not_full;
+
+} Queue;
+
+
+static void Queue_Init(Queue *q)
+{
+    q->head = 0;
+    q->tail = 0;
+    q->count = 0;
+
+    pthread_mutex_init(&q->mutex, NULL);
+    pthread_cond_init(&q->not_empty, NULL);
+    pthread_cond_init(&q->not_full, NULL);
+}
+
+
+static void Queue_Put(Queue *q, int value)
+{
+    pthread_mutex_lock(&q->mutex);
+
+    /*
+     * Queue is full.
+     * Wait until a consumer removes something.
+     */
+    while (q->count == QUEUE_SIZE)
+    {
+        pthread_cond_wait(&q->not_full, &q->mutex);
+    }
+
+    /* Put item into queue */
+    q->buffer[q->head] = value;
+    q->head = (q->head + 1) % QUEUE_SIZE;
+    q->count++;
+
+    printf("Producer: put %2d   queue=%d\n",
+           value, q->count);
+
+    /*
+     * We just added an item, so wake a waiting consumer.
+     */
+    pthread_cond_signal(&q->not_empty);
+
+    pthread_mutex_unlock(&q->mutex);
+}
+
+
+static int Queue_Get(Queue *q)
+{
+    int value;
+
+    pthread_mutex_lock(&q->mutex);
+
+    /*
+     * Queue is empty.
+     * Wait until a producer adds something.
+     */
+    while (q->count == 0)
+    {
+        pthread_cond_wait(&q->not_empty, &q->mutex);
+    }
+
+    /* Remove item from queue */
+    value = q->buffer[q->tail];
+    q->tail = (q->tail + 1) % QUEUE_SIZE;
+    q->count--;
+
+    printf("Consumer: got %2d   queue=%d\n",
+           value, q->count);
+
+    /*
+     * We just removed an item, so wake a waiting producer.
+     */
+    pthread_cond_signal(&q->not_full);
+
+    pthread_mutex_unlock(&q->mutex);
+
+    return value;
+}
+
+
+static void *Producer(void *arg)
+{
+    Queue *q = (Queue *)arg;
+
+    for (int i = 0; i < NUM_ITEMS; i++)
+    {
+        Queue_Put(q, i);
+
+        /*
+         * Simulate production time.
+         */
+        usleep(100000);
+    }
+
+    return NULL;
+}
+
+
+static void *Consumer(void *arg)
+{
+    Queue *q = (Queue *)arg;
+
+    for (int i = 0; i < NUM_ITEMS; i++)
+    {
+        int value = Queue_Get(q);
+
+        /*
+         * Simulate processing time.
+         */
+        usleep(300000);
+
+        (void)value;
+    }
+
+    return NULL;
+}
+
+
+int main(void)
+{
+    Queue queue;
+
+    pthread_t producer_thread;
+    pthread_t consumer_thread;
+
+    Queue_Init(&queue);
+
+    pthread_create(&producer_thread,
+                   NULL,
+                   Producer,
+                   &queue);
+
+    pthread_create(&consumer_thread,
+                   NULL,
+                   Consumer,
+                   &queue);
+
+    pthread_join(producer_thread, NULL);
+    pthread_join(consumer_thread, NULL);
+
+    return 0;
+}
