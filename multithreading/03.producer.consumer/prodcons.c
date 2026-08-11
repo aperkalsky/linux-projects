@@ -6,6 +6,8 @@
 #define QUEUE_SIZE     5
 #define NUM_ITEMS      20
 
+pthread_mutex_t lock;
+
 typedef struct
 {
     int buffer[QUEUE_SIZE];
@@ -14,7 +16,6 @@ typedef struct
     int tail;       // Next position to read
     int count;      // Number of items currently in queue
 
-    pthread_mutex_t mutex;
     pthread_cond_t  not_empty;
     pthread_cond_t  not_full;
 
@@ -27,7 +28,6 @@ static void Queue_Init(Queue *q)
     q->tail = 0;
     q->count = 0;
 
-    pthread_mutex_init(&q->mutex, NULL);
     pthread_cond_init(&q->not_empty, NULL);
     pthread_cond_init(&q->not_full, NULL);
 }
@@ -35,7 +35,7 @@ static void Queue_Init(Queue *q)
 
 static void Queue_Put(Queue *q, int value)
 {
-    pthread_mutex_lock(&q->mutex);
+    pthread_mutex_lock(&lock);
 
     /*
      * Queue is full.
@@ -43,7 +43,7 @@ static void Queue_Put(Queue *q, int value)
      */
     while (q->count == QUEUE_SIZE)
     {
-        pthread_cond_wait(&q->not_full, &q->mutex);
+        pthread_cond_wait(&q->not_full, &lock);
     }
 
     /* Put item into queue */
@@ -59,7 +59,7 @@ static void Queue_Put(Queue *q, int value)
      */
     pthread_cond_signal(&q->not_empty);
 
-    pthread_mutex_unlock(&q->mutex);
+    pthread_mutex_unlock(&lock);
 }
 
 
@@ -67,7 +67,7 @@ static int Queue_Get(Queue *q)
 {
     int value;
 
-    pthread_mutex_lock(&q->mutex);
+    pthread_mutex_lock(&lock);
 
     /*
      * Queue is empty.
@@ -75,7 +75,7 @@ static int Queue_Get(Queue *q)
      */
     while (q->count == 0)
     {
-        pthread_cond_wait(&q->not_empty, &q->mutex);
+        pthread_cond_wait(&q->not_empty, &lock);
     }
 
     /* Remove item from queue */
@@ -91,7 +91,7 @@ static int Queue_Get(Queue *q)
      */
     pthread_cond_signal(&q->not_full);
 
-    pthread_mutex_unlock(&q->mutex);
+    pthread_mutex_unlock(&lock);
 
     return value;
 }
@@ -142,6 +142,7 @@ int main(void)
     pthread_t producer_thread;
     pthread_t consumer_thread;
 
+ 	pthread_mutex_init(&lock, NULL);
     Queue_Init(&queue);
 
     pthread_create(&producer_thread,
@@ -156,6 +157,8 @@ int main(void)
 
     pthread_join(producer_thread, NULL);
     pthread_join(consumer_thread, NULL);
+
+	pthread_mutex_destroy(&lock);
 
     return 0;
 }
