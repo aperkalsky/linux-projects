@@ -2,11 +2,14 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <stdatomic.h>
 
 #define QUEUE_SIZE     5
 #define NUM_ITEMS      20
 
 pthread_mutex_t lock;
+atomic_int numItemsRemainingToProduce = NUM_ITEMS;
+atomic_int numItemsRemainingToConsume = 0;
 
 typedef struct
 {
@@ -100,38 +103,31 @@ static int Queue_Get(Queue *q)
 static void *Producer(void *arg)
 {
     Queue *q = (Queue *)arg;
-
-    for (int i = 0; i < NUM_ITEMS; i++)
-    {
-        Queue_Put(q, i);
-
-        /*
-         * Simulate production time.
-         */
+	
+	while(numItemsRemainingToProduce >= 0)
+	{
+        Queue_Put(q, numItemsRemainingToProduce);
+		numItemsRemainingToProduce--;
         usleep(100000);
-    }
+	}
 
-    return NULL;
+	pthread_exit(NULL);
 }
 
 
 static void *Consumer(void *arg)
 {
     Queue *q = (Queue *)arg;
-
-    for (int i = 0; i < NUM_ITEMS; i++)
-    {
+	
+	while(numItemsRemainingToConsume <= NUM_ITEMS)
+	{
         int value = Queue_Get(q);
-
-        /*
-         * Simulate processing time.
-         */
+		numItemsRemainingToConsume++;
         usleep(300000);
+        (void)value;	// tell compiler that we do not use this value
+	}
 
-        (void)value;
-    }
-
-    return NULL;
+	pthread_exit(NULL);
 }
 
 
