@@ -59,6 +59,10 @@ static void Queue_Put(Queue *q, int value)
      */
     while (q->count == QUEUE_SIZE)
     {
+		// Unlocks the mutex and starts waiting on the condition variable in one single, atomic step.
+		// This stops race conditions between checking a state and waiting.
+		// When another thread signals the condition, the waiting thread wakes up and automatically
+		// locks (re-acquires) the mutex before returning
         pthread_cond_wait(&q->not_full, &q->mutex);
     }
 
